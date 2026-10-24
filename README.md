@@ -1,24 +1,5 @@
 # Deal Pilot
 
-## 配置环境变量
-
-基础设施（Langfuse 及其依赖组件）的密钥与账号密码全部通过根目录的 `.env` 注入：
-
-```shell
-cp .env.example .env
-```
-
-首次启动前需要在 `.env` 中补齐以下配置，其中密码类可以自定义，`SALT` / `ENCRYPTION_KEY` / `NEXTAUTH_SECRET` 建议用 `openssl rand -base64 32` 生成：
-
-- `LANGFUSE_SALT`
-- `LANGFUSE_ENCRYPTION_KEY`
-- `LANGFUSE_NEXTAUTH_SECRET`
-- `LANGFUSE_POSTGRES_PASSWORD`
-- `LANGFUSE_CLICKHOUSE_PASSWORD`
-- `LANGFUSE_MINIO_ROOT_PASSWORD`
-
-> 已有数据后不要再更换 `LANGFUSE_SALT` 与 `LANGFUSE_ENCRYPTION_KEY`，否则历史数据无法解密。
-
 ## 启动服务
 
 **启动基础设施环境**
@@ -49,6 +30,16 @@ make debug
 - **Langfuse 管理后台**
 
   访问地址： http://localhost:3000
+  
+- **LiteLLM**
+
+  管理后台：http://localhost:4000/ui/
+  
+  账号：admin
+  
+  密码：123456
+  
+  API 地址：http://localhost:4000/v1
 
 ### 不常用服务
 
@@ -56,5 +47,7 @@ make debug
 
   访问地址： http://localhost:9001
 
-  账号/密码：`.env` 中的 `LANGFUSE_MINIO_ROOT_USER` / `LANGFUSE_MINIO_ROOT_PASSWORD`
+  账号：root
+
+  密码：12345678
 
