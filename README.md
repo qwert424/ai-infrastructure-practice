@@ -35,9 +35,7 @@ make debug
 
   管理后台：http://localhost:4000/ui/
   
-  账号：admin
-  
-  密码：123456
+  账号/密码：`.env` 中的 `LITELLM_UI_USERNAME` / `LITELLM_UI_PASSWORD`
   
   API 地址：http://localhost:4000/v1
 
@@ -47,7 +45,5 @@ make debug
 
   访问地址： http://localhost:9001
 
-  账号：root
-
-  密码：12345678
+  账号/密码：`.env` 中的 `LANGFUSE_MINIO_ROOT_USER` / `LANGFUSE_MINIO_ROOT_PASSWORD`
 

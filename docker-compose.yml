@@ -160,10 +160,10 @@ services:
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
       UI_USERNAME: ${LITELLM_UI_USERNAME}
       UI_PASSWORD: ${LITELLM_UI_PASSWORD}
-      DATABASE_URL: postgresql://${LITELLM_POSTGRES_USER}:${LITELLM_POSTGRES_PASSWORD}@litellm_postgres:5432/${LITELLM_POSTGRES_DB}
+      DATABASE_URL: postgresql://${LITELLM_POSTGRES_USER}:${LITELLM_POSTGRES_PASSWORD}@litellm-postgres:5432/${LITELLM_POSTGRES_DB}
       STORE_MODEL_IN_DB: "True"
       STORE_PROMPTS_IN_SPEND_LOGS: "True"
-      REDIS_HOST: litellm_redis
+      REDIS_HOST: litellm-redis
       REDIS_PORT: 6379
       REDIS_DB: 0
       # config.yaml 中的模型凭据从这些变量读取
@@ -171,12 +171,12 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL}
       OPENAI_DEFAULT_MODEL: ${OPENAI_DEFAULT_MODEL}
     depends_on:
-      litellm_postgres:
+      litellm-postgres:
         condition: service_healthy
-      litellm_redis:
+      litellm-redis:
         condition: service_healthy
 
-  litellm_postgres:
+  litellm-postgres:
     image: docker.io/postgres:17
     restart: always
     environment:
@@ -191,7 +191,7 @@ services:
       timeout: 3s
       retries: 10
 
-  litellm_redis:
+  litellm-redis:
     image: docker.io/redis:7
     restart: always
     volumes:
