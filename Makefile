@@ -1,6 +1,6 @@
 DS ?= all
 
-.PHONY: docker-recreate build dev debug course course-push test-benchmark
+.PHONY: docker-recreate build dev debug test-benchmark
 
 docker-recreate:
 	docker compose up -d --force-recreate
