@@ -14,13 +14,20 @@ LangChain 官方 `ChatOpenAI` 明确不提取第三方扩展字段
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
+from langchain_core.callbacks import CallbackManagerForLLMRun
+from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatGenerationChunk, ChatResult
 from langchain_openai import ChatOpenAI
+from pydantic import PrivateAttr
 
 if TYPE_CHECKING:
     from langchain_core.messages import BaseMessageChunk
+
+logger = logging.getLogger(__name__)
 
 
 class ReasoningChatModel(ChatOpenAI):
@@ -46,7 +53,48 @@ class ReasoningChatModel(ChatOpenAI):
 
     output_version: str = "v1"  # type: ignore # 启用 content_blocks，LangSmith 可渲染
 
+    _thinking_unsupported: bool = PrivateAttr(default=False)
+
+    # ---- thinking 降级 ------------------------------------------------------
+
+    @staticmethod
+    def _is_thinking_rejected(error: BaseException) -> bool:
+        """判断是否因 provider 不支持 thinking 参数而被拒绝。"""
+        message = str(getattr(error, "message", "") or error).lower()
+        return getattr(error, "status_code", None) == 400 and "thinking" in message
+
+    def _drop_thinking(self, error: BaseException) -> bool:
+        """部分模型强制开启思考：去掉 thinking 参数后允许重试一次。"""
+        if self._thinking_unsupported or not self._is_thinking_rejected(error):
+            return False
+        extra_body = dict(self.extra_body or {})
+        extra_body.pop("thinking", None)
+        self.extra_body = extra_body or None
+        self._thinking_unsupported = True
+        logger.warning(
+            "模型 %s 不支持 thinking 参数，已自动忽略：%s", self.model_name, error
+        )
+        return True
+
     # ---- 非流式 ------------------------------------------------------------
+
+    def _generate(
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        try:
+            return super()._generate(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
+        except Exception as error:
+            if not self._drop_thinking(error):
+                raise
+            return super()._generate(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
 
     def _create_chat_result(
         self,
@@ -87,6 +135,19 @@ class ReasoningChatModel(ChatOpenAI):
         return result
 
     # ---- 流式 --------------------------------------------------------------
+
+    def _stream(
+        self, *args: Any, **kwargs: Any
+    ) -> Iterator[ChatGenerationChunk]:
+        emitted = False
+        try:
+            for chunk in super()._stream(*args, **kwargs):
+                emitted = True
+                yield chunk
+        except Exception as error:
+            if emitted or not self._drop_thinking(error):
+                raise
+            yield from super()._stream(*args, **kwargs)
 
     def _convert_chunk_to_generation_chunk(
         self,
