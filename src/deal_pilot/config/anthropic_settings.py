@@ -1,12 +1,13 @@
-from deal_pilot.config.base_settings import BaseSettingsWithEnv
+# 统一使用 openai 兼容模式，暂不使用 anthropic api
+# from deal_pilot.config.base_settings import BaseSettingsWithEnv
 
 
-class AnthropicSettings(BaseSettingsWithEnv):
-    api_key: str = ""
-    base_url: str = ""
-    default_model: str = ""
+# class AnthropicSettings(BaseSettingsWithEnv):
+#     api_key: str = ""
+#     base_url: str = ""
+#     default_model: str = ""
 
-    model_config = {"env_prefix": "ANTHROPIC_"}
+#     model_config = {"env_prefix": "ANTHROPIC_"}
 
 
-anthropic_settings = AnthropicSettings()
+# anthropic_settings = AnthropicSettings()
