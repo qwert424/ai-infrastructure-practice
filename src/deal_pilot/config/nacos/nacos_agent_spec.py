@@ -39,7 +39,7 @@ async def get_agent_spec(agent_name: str) -> AgentSpec:
         .get("content", "")
     )
     config["name"] = agent_name
-    link_prompt_list = config.get("link_prompt", [])
+    link_prompt_list = config.get("link_prompts", [])
     link_prompt = await get_prompts(link_prompt_list)
     config["system_prompt"] = system_prompt + "\n\n" + link_prompt
     print(f"get_agent_spec: {agent_name} -> {config}")
