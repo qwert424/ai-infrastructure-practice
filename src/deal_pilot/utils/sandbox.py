@@ -12,6 +12,7 @@ from datetime import timedelta
 from opensandbox.config import ConnectionConfig
 from opensandbox.exceptions import SandboxApiException
 from deal_pilot.config.sandbox_settings import sandbox_settings
+from deal_pilot.config.minio_settings import minio_settings
 import uuid
 import asyncio
 
@@ -19,6 +20,33 @@ _MEMEORY_STORE = InMemoryStore()
 
 _locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
 _NAMESPACE = ("__sandbox__",)
+
+# 沙箱访问宿主机服务的地址；回环地址在容器内不可用。
+_HOST_ALIAS = "host.docker.internal"
+
+
+def _sandbox_minio_endpoint() -> str:
+    if minio_settings.sandbox_endpoint:
+        return minio_settings.sandbox_endpoint
+    host, sep, port = minio_settings.endpoint.partition(":")
+    if host in {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}:
+        host = _HOST_ALIAS
+    return f"{host}{sep}{port}"
+
+
+def _sandbox_env() -> dict[str, str] | None:
+    """把 MinIO 配置注入沙箱，供 minio.py 的 from_settings() 读取。"""
+    if not minio_settings.access_key or not minio_settings.secret_key:
+        return None
+    return {
+        "MINIO_ENDPOINT": _sandbox_minio_endpoint(),
+        "MINIO_ACCESS_KEY": minio_settings.access_key,
+        "MINIO_SECRET_KEY": minio_settings.secret_key,
+        "MINIO_SECURE": "true" if minio_settings.secure else "false",
+        "MINIO_BUCKET": minio_settings.bucket,
+        # 沙箱里只有 /sandbox_utils 下的 minio.py，不装 deal_pilot 包。
+        "PYTHONPATH": "/sandbox_utils",
+    }
 
 
 async def _get_store(store: BaseStore, key: str, field_name: str) -> str | None:
@@ -55,6 +83,8 @@ async def _create(
         ready_timeout=timedelta(seconds=sandbox_config.ready_timeout_seconds),
         # 挂载卷柜
         volumes=[v],
+        # MinIO 等工具所需的环境变量
+        env=_sandbox_env(),
     )
 
     await store.aput(_NAMESPACE, key, {"sandbox_id": sandbox.id, "volume": v_name})

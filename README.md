@@ -85,6 +85,13 @@ make debug
   `MINIO_TEST_SECRET_KEY`，只有 `minio-it-*` 测试桶的建删权限（策略见
   `resources/minio-test-policy.json`）；应用凭证不需要建桶权限。
 
+  **沙箱内使用**：`docker/sandbox/Dockerfile` 会把 `src/deal_pilot/utils/minio.py` 复制到
+  `/sandbox_utils`。沙箱里没有 `deal_pilot` 包，`MinIO.from_settings()` 会自动退回读取同名
+  环境变量（`MINIO_ENDPOINT` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` /
+  `MINIO_SECURE`）。创建沙箱时这些变量由 `deal_pilot.utils.sandbox` 自动注入，回环地址会替换为
+  `host.docker.internal`（可用 `.env` 的 `MINIO_SANDBOX_ENDPOINT` 覆盖），并注入
+  `PYTHONPATH=/sandbox_utils`。
+
 
 ### 不常用服务
 

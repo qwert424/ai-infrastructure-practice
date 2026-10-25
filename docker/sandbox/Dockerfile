@@ -22,4 +22,13 @@ RUN npm install --global pnpm@12 \
     && pnpm --version \
     && test "$(pnpm config get registry)" = "https://registry.npmmirror.com/"
 
+# 沙箱工具集：复用 Agent 侧的 MinIO 客户端实现。
+# 构建上下文必须是项目根目录：docker build -f docker/sandbox/Dockerfile .
+WORKDIR /sandbox_utils
+RUN uv init --bare --name sandbox-utils --python 3.13
+RUN uv add "aiobotocore==3.9.2"
+
+COPY src/deal_pilot/utils/minio.py /sandbox_utils/minio.py
+RUN uv run --locked python -c "from minio import MinIO"
+
 WORKDIR /root/workspace

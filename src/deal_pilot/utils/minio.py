@@ -76,6 +76,11 @@ def _error_code(exc: ClientError) -> str:
     return str(exc.response.get("Error", {}).get("Code", ""))
 
 
+def _env_flag(value: str | None) -> bool:
+    # 与 pydantic 的布尔解析保持一致，便于沙箱读取同名环境变量。
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "y", "on"}
+
+
 class _ExistingClient:
     """把已创建的客户端包装成异步上下文管理器，避免重复建连和关闭。"""
 
@@ -261,18 +266,35 @@ class MinIO:
 
     @classmethod
     def from_settings(cls, **overrides: Any) -> MinIO:
-        """用 .env 中的 MINIO_* 配置构造客户端；overrides 覆盖同名字段。"""
-        from deal_pilot.config.minio_settings import minio_settings
+        """用 MINIO_* 配置构造客户端；overrides 覆盖同名字段。
 
-        options: dict[str, Any] = {
+        Agent 侧读取 `.env` 中的 minio_settings；沙箱等没有 deal_pilot 包的环境
+        退回读取同名环境变量，两处行为一致。
+        """
+        options = cls._settings_options()
+        options.update(overrides)
+        return cls(**options)
+
+    @staticmethod
+    def _settings_options() -> dict[str, Any]:
+        try:
+            from deal_pilot.config.minio_settings import minio_settings
+        except ImportError:
+            # 沙箱里只拷贝了本模块，没有 deal_pilot 包，改用环境变量。
+            return {
+                "endpoint": os.environ.get("MINIO_ENDPOINT") or "localhost:9002",
+                "access_key": os.environ.get("MINIO_ACCESS_KEY", ""),
+                "secret_key": os.environ.get("MINIO_SECRET_KEY", ""),
+                "secure": _env_flag(os.environ.get("MINIO_SECURE")),
+                "bucket": os.environ.get("MINIO_BUCKET") or None,
+            }
+        return {
             "endpoint": minio_settings.endpoint,
             "access_key": minio_settings.access_key,
             "secret_key": minio_settings.secret_key,
             "secure": minio_settings.secure,
             "bucket": minio_settings.bucket or None,
         }
-        options.update(overrides)
-        return cls(**options)
 
     async def __aenter__(self) -> MinIO:
         """进入上下文后复用同一个客户端，避免每次操作重新建连。"""

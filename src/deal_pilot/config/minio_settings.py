@@ -8,6 +8,8 @@ class MinioSettings(BaseSettingsWithEnv):
     secret_key: str = ""
     # MinIO API 地址，不包含协议前缀。
     endpoint: str = "localhost:9002"
+    # 沙箱容器内访问 MinIO 的地址；留空时把 endpoint 的回环地址替换为 host.docker.internal。
+    sandbox_endpoint: str = ""
     # 是否使用 HTTPS 连接。
     secure: bool = False
     # 默认存储桶，服务账号的权限仅限该桶。
