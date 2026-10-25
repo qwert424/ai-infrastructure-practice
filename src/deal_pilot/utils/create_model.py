@@ -5,6 +5,7 @@ from typing import Any
 from langchain.chat_models import init_chat_model
 
 from deal_pilot.config.openai_settings import openai_settings
+from deal_pilot.utils.shared import get_thread_id
 
 
 def _resolve_thinking(thinking: bool | str | dict[str, Any]) -> bool:
@@ -41,6 +42,8 @@ def create_model(*, thinking: bool | str | dict[str, Any] = True, **kwargs: Any)
         "extra_body": {"enable_thinking": _resolve_thinking(thinking)},
     }
     config.update(kwargs)
-
+    thread_id = get_thread_id()
+    if thread_id:
+        config["default_headers"] = {"x-litellm-session-id": thread_id}
     model = init_chat_model(**config)
     return model
