@@ -26,7 +26,6 @@ class MainAgentFactory(AgentFactory):
         system_prompt: str,
         tools: Sequence[BaseTool],
         subagents: list[dict],
-        skills: list[str],
     ) -> Runnable:
         agent = create_deep_agent(
             model=model,
