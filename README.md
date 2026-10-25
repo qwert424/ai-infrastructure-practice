@@ -53,9 +53,38 @@ make debug
 
   API 接口：http://127.0.0.1:8090/docs
 
+- **Shared MinIO（共享对象存储）**
+
+  管理后台：http://localhost:9003
+
+  账号/密码：`.env` 中的 `SHARED_MINIO_ROOT_USER` / `SHARED_MINIO_ROOT_PASSWORD`
+
+  宿主机访问 API：http://localhost:9002
+
+  应用凭证：`.env` 中的 `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`，由专用服务账号（svcacct）签发，
+  权限限定在 `deal-pilot` 桶（策略见 `resource/minio-policy.json`），应用不使用 root 凭证。
+
+  **服务账号的创建 / 查看 / 撤销**（管理员在容器内执行 mc）
+
+  ```shell
+  # 配置管理员别名（使用 root 凭证）
+  docker exec deal-pilot-shared-minio-1 mc alias set shared http://localhost:9000 <root账号> <root密码>
+
+  # 创建：按策略签发专用凭据，输出中的 accessKey / secretKey 写入 .env
+  docker cp resource/minio-policy.json deal-pilot-shared-minio-1:/tmp/minio-policy.json
+  docker exec deal-pilot-shared-minio-1 mc admin user svcacct add --policy /tmp/minio-policy.json shared root
+
+  # 查看
+  docker exec deal-pilot-shared-minio-1 mc admin user svcacct ls shared root
+
+  # 撤销：占位值替换为实际的 Access Key
+  docker exec deal-pilot-shared-minio-1 mc admin user svcacct rm shared '<实际生成的 Access Key>'
+  ```
+
+
 ### 不常用服务
 
-- MinIO 管理后台
+- Langfuse MinIO 管理后台
 
   访问地址： http://localhost:9001
 
