@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from langgraph.store.base import BaseStore
 from langgraph.runtime import get_runtime
 from langgraph.store.memory import InMemoryStore
@@ -115,3 +117,14 @@ async def get_sandbox(key: str | None = None, store: BaseStore | None = None):
             store=store,
         )
         return sandbox
+
+
+# 异步上下文管理器
+@asynccontextmanager
+async def sandbox_context(key: str | None = None, store: BaseStore | None = None):
+    sandbox = await get_sandbox(key=key, store=store)
+    sandbox_config = await get_config("sandbox_config", OpenSandboxConfig)
+    await sandbox.renew(timeout=timedelta(seconds=sandbox_config.timeout_seconds))
+    yield sandbox
+    await sandbox.renew(timeout=timedelta(seconds=sandbox_config.timeout_seconds))
+    await sandbox.close()
