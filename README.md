@@ -47,6 +47,10 @@ make debug
 
   密码：初始界面自行设定
 
+- **OpenSandbox Server**
+
+  API 接口：http://127.0.0.1:8090/docs
+
 ### 不常用服务
 
 - MinIO 管理后台
