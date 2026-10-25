@@ -62,7 +62,7 @@ make debug
   宿主机访问 API：http://localhost:9002
 
   应用凭证：`.env` 中的 `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`，由专用服务账号（svcacct）签发，
-  权限限定在 `deal-pilot` 桶（策略见 `resource/minio-policy.json`），应用不使用 root 凭证。
+  权限限定在 `deal-pilot` 桶（策略见 `resources/minio-policy.json`），应用不使用 root 凭证。
 
   **服务账号的创建 / 查看 / 撤销**（管理员在容器内执行 mc）
 
@@ -71,7 +71,7 @@ make debug
   docker exec deal-pilot-shared-minio-1 mc alias set shared http://localhost:9000 <root账号> <root密码>
 
   # 创建：按策略签发专用凭据，输出中的 accessKey / secretKey 写入 .env
-  docker cp resource/minio-policy.json deal-pilot-shared-minio-1:/tmp/minio-policy.json
+  docker cp resources/minio-policy.json deal-pilot-shared-minio-1:/tmp/minio-policy.json
   docker exec deal-pilot-shared-minio-1 mc admin user svcacct add --policy /tmp/minio-policy.json shared root
 
   # 查看
@@ -80,6 +80,10 @@ make debug
   # 撤销：占位值替换为实际的 Access Key
   docker exec deal-pilot-shared-minio-1 mc admin user svcacct rm shared '<实际生成的 Access Key>'
   ```
+
+  **集成测试凭证**：`make test-integrations` 读取 `.env` 的 `MINIO_TEST_ACCESS_KEY` /
+  `MINIO_TEST_SECRET_KEY`，只有 `minio-it-*` 测试桶的建删权限（策略见
+  `resources/minio-test-policy.json`）；应用凭证不需要建桶权限。
 
 
 ### 不常用服务

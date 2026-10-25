@@ -1,6 +1,13 @@
 DS ?= all
 
-.PHONY: docker-recreate build dev debug test-benchmark test-units
+# Windows 的 cmd 与 POSIX shell 设置环境变量的语法不同，这里统一处理。
+ifeq ($(OS),Windows_NT)
+INTEGRATION_ENV = set "MINIO_INTEGRATION=1" &&
+else
+INTEGRATION_ENV = MINIO_INTEGRATION=1
+endif
+
+.PHONY: docker-recreate build dev debug test-benchmark test-units test-integrations
 
 docker-recreate:
 	docker compose up -d --force-recreate
@@ -19,3 +26,6 @@ test-benchmark:
 
 test-units:
 	uv run pytest -q tests/units
+
+test-integrations:
+	$(INTEGRATION_ENV) uv run pytest -q tests/intergrations

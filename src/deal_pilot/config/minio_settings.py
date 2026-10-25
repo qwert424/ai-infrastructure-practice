@@ -12,6 +12,9 @@ class MinioSettings(BaseSettingsWithEnv):
     secure: bool = False
     # 默认存储桶，服务账号的权限仅限该桶。
     bucket: str = "deal-pilot"
+    # 集成测试专用凭证（需要建桶/删桶权限）；留空时回退到上面的应用凭证。
+    test_access_key: str = ""
+    test_secret_key: str = ""
 
     model_config = {"env_prefix": "MINIO_"}
 
