@@ -12,6 +12,7 @@ from aiobotocore.config import AioConfig
 from aiobotocore.session import get_session
 
 from deal_pilot.config.minio_settings import minio_settings
+from deal_pilot.config.sandbox_settings import sandbox_settings
 from deal_pilot.utils.minio import MinIO
 
 
@@ -111,7 +112,7 @@ class MinioEnvironment:
 def minio_env():
     if os.environ.get("MINIO_INTEGRATION") != "1":
         pytest.skip("真实 MinIO 集成测试需显式启用：make test-integrations")
-    # 应用凭证只有 deal-pilot 桶的对象权限，建/删测试桶需要专用测试凭证。
+    # 应用凭证只有业务桶权限，建/删 minio-it-* 测试桶需要专用测试凭证。
     access_key = minio_settings.test_access_key or minio_settings.access_key
     secret_key = minio_settings.test_secret_key or minio_settings.secret_key
     if not access_key or not secret_key:
@@ -127,3 +128,16 @@ def minio_env():
             secure=minio_settings.secure,
         )
     )
+
+
+@pytest.fixture
+def deploy_env(request):
+    if os.environ.get("DEPLOY_INTEGRATION") != "1":
+        pytest.skip("Deploy 真实沙箱集成测试需设置 DEPLOY_INTEGRATION=1 和 MINIO_INTEGRATION=1")
+    if not sandbox_settings.domain or not sandbox_settings.api_key:
+        pytest.fail("请配置 OPEN_SANDBOX_DOMAIN / OPEN_SANDBOX_API_KEY")
+    if not minio_settings.endpoint_in_sandbox:
+        pytest.fail("请配置沙箱可达的 MinIO 地址：MINIO_SANDBOX_ENDPOINT")
+    if not os.environ.get("DEPLOY_SANDBOX_IMAGE"):
+        pytest.fail("请用 docker/sandbox/Dockerfile 构建镜像并配置 DEPLOY_SANDBOX_IMAGE")
+    return request.getfixturevalue("minio_env")

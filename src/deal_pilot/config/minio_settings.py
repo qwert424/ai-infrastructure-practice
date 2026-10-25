@@ -1,5 +1,9 @@
 from deal_pilot.config.base_settings import BaseSettingsWithEnv
 
+# 容器内不可用的回环地址，注入沙箱时需替换为宿主机别名。
+_LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}
+_HOST_ALIAS = "host.docker.internal"
+
 
 class MinioSettings(BaseSettingsWithEnv):
     # 专用服务账号的访问密钥（不使用 root 凭证）。
@@ -19,6 +23,14 @@ class MinioSettings(BaseSettingsWithEnv):
     test_secret_key: str = ""
 
     model_config = {"env_prefix": "MINIO_"}
+
+    @property
+    def endpoint_in_sandbox(self) -> str:
+        """实际注入沙箱的地址，由 sandbox_endpoint / endpoint 推导。"""
+        host, sep, port = (self.sandbox_endpoint or self.endpoint).partition(":")
+        if host in _LOOPBACK_HOSTS:
+            host = _HOST_ALIAS
+        return f"{host}{sep}{port}"
 
 
 minio_settings = MinioSettings()

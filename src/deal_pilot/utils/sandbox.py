@@ -21,25 +21,13 @@ _MEMEORY_STORE = InMemoryStore()
 _locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
 _NAMESPACE = ("__sandbox__",)
 
-# 沙箱访问宿主机服务的地址；回环地址在容器内不可用。
-_HOST_ALIAS = "host.docker.internal"
-
-
-def _sandbox_minio_endpoint() -> str:
-    if minio_settings.sandbox_endpoint:
-        return minio_settings.sandbox_endpoint
-    host, sep, port = minio_settings.endpoint.partition(":")
-    if host in {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}:
-        host = _HOST_ALIAS
-    return f"{host}{sep}{port}"
-
 
 def _sandbox_env() -> dict[str, str] | None:
     """把 MinIO 配置注入沙箱，供 minio.py 的 from_settings() 读取。"""
     if not minio_settings.access_key or not minio_settings.secret_key:
         return None
     return {
-        "MINIO_ENDPOINT": _sandbox_minio_endpoint(),
+        "MINIO_ENDPOINT": minio_settings.endpoint_in_sandbox,
         "MINIO_ACCESS_KEY": minio_settings.access_key,
         "MINIO_SECRET_KEY": minio_settings.secret_key,
         "MINIO_SECURE": "true" if minio_settings.secure else "false",
