@@ -69,6 +69,7 @@ class ReasoningChatModel(ChatOpenAI):
             return False
         extra_body = dict(self.extra_body or {})
         extra_body.pop("thinking", None)
+        extra_body.pop("enable_thinking", None)
         self.extra_body = extra_body or None
         self._thinking_unsupported = True
         logger.warning(

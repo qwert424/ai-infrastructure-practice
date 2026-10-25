@@ -32,14 +32,13 @@ def _resolve_thinking(thinking: bool | str | dict[str, Any]) -> bool:
 
 def create_model(*, thinking: bool | str | dict[str, Any] = True, **kwargs: Any):
     kwargs.pop("model_provider", None)  # 删除 model_provider 字段
-    extra_body: dict[str, Any] = {
-        "thinking": {"type": "enabled" if _resolve_thinking(thinking) else "disabled"},
-    }
-    extra_body.update(kwargs.pop("extra_body", {}))
+    kwargs.pop("extra_body", None)  # 透传字段统一由 enable_thinking 控制
     config = {
         "model": openai_settings.default_model,
         "model_provider": "openai_reasoning",
-        "extra_body": extra_body,
+        # qwen 等 OpenAI 兼容网关只接受布尔值 enable_thinking，
+        # 传 {"thinking": {...}} 会被判定为不支持参数而 400
+        "extra_body": {"enable_thinking": _resolve_thinking(thinking)},
     }
     config.update(kwargs)
 
