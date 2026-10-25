@@ -163,6 +163,8 @@ services:
       DATABASE_URL: postgresql://${LITELLM_POSTGRES_USER}:${LITELLM_POSTGRES_PASSWORD}@litellm-postgres:5432/${LITELLM_POSTGRES_DB}
       STORE_MODEL_IN_DB: "True"
       STORE_PROMPTS_IN_SPEND_LOGS: "True"
+      LANGFUSE_TRACING_ENVIRONMENT: gateway
+      OTEL_ENVIRONMENT_NAME: gateway
       REDIS_HOST: litellm-redis
       REDIS_PORT: 6379
       REDIS_DB: 0
@@ -202,6 +204,28 @@ services:
       timeout: 10s
       retries: 10
 
+  nacos:
+    image: nacos/nacos-server:v3.2.4-slim
+    restart: always
+    environment:
+      MODE: standalone
+      FUNCTION_MODE: all
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN}
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_AUTH_IDENTITY_KEY}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_AUTH_IDENTITY_VALUE}
+    ports:
+      - "127.0.0.1:8080:8080" # 控制台
+      - "127.0.0.1:8848:8848" # HTTP 客户端 API
+      - "127.0.0.1:9848:9848" # gRPC 客户端通信
+    volumes:
+      - type: volume
+        source: nacos_data
+        target: /home/nacos/data
+        volume:
+          nocopy: true
+      - nacos_logs:/home/nacos/logs
+
 volumes:
   langfuse_clickhouse_data:
   langfuse_clickhouse_logs:
@@ -210,3 +234,5 @@ volumes:
   langfuse_postgres_data:
   litellm_postgres_data:
   litellm_redis_data:
+  nacos_data:
+  nacos_logs:
