@@ -4,6 +4,7 @@ from typing import Any
 
 from langchain.chat_models import init_chat_model
 
+from deal_pilot.config.nacos.nacos_schemas import AgentModelConfig
 from deal_pilot.config.openai_settings import openai_settings
 from deal_pilot.utils.shared import get_thread_id
 
@@ -31,17 +32,22 @@ def _resolve_thinking(thinking: bool | str | dict[str, Any]) -> bool:
     )
 
 
-def create_model(*, thinking: bool | str | dict[str, Any] = True, **kwargs: Any):
-    kwargs.pop("model_provider", None)  # 删除 model_provider 字段
-    kwargs.pop("extra_body", None)  # 透传字段统一由 enable_thinking 控制
+def create_model(model_config: AgentModelConfig | None = None):
+    if model_config is None:
+        model_config = AgentModelConfig()
+
     config = {
-        "model": openai_settings.default_model,
+        "model": model_config.name,
         "model_provider": "openai_reasoning",
         # qwen 等 OpenAI 兼容网关只接受布尔值 enable_thinking，
         # 传 {"thinking": {...}} 会被判定为不支持参数而 400
-        "extra_body": {"enable_thinking": _resolve_thinking(thinking)},
+        "extra_body": {"enable_thinking": _resolve_thinking(model_config.thinking)},
     }
-    config.update(kwargs)
+    if model_config.temperature is not None:
+        config["temperature"] = model_config.temperature
+    if model_config.top_p is not None:
+        config["top_p"] = model_config.top_p
+
     thread_id = get_thread_id()
     if thread_id:
         config["default_headers"] = {"x-litellm-session-id": thread_id}
