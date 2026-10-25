@@ -7,6 +7,7 @@ class NacosSettings(BaseSettingsWithEnv):
     namespace_id: str = ""
     username: str = ""
     password: str = ""
+    ttl: int = 0
 
     model_config = {"env_prefix": "NACOS_"}
 
