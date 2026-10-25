@@ -37,7 +37,7 @@ async def get_prompts(prompt_names: list[str]) -> str:
 if __name__ == "__main__":
 
     async def main():
-        result = await get_prompts(["sandbox_prompt"])
+        result = await get_prompts(["sandbox-shared-prompt", "sandbox-main-prompt"])
         print(type(result), result)
 
     asyncio.run(main())

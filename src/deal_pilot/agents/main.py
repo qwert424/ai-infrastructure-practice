@@ -4,14 +4,13 @@ from typing import Any
 from langchain.tools import BaseTool
 from langchain_core.runnables import Runnable
 
-from deepagents import create_deep_agent
-from deepagents.middleware import CompiledSubAgent
-from deal_pilot.backends.sandbox_backend import SandboxBackend
+from deepagents import DeepAgentState
 from deal_pilot.utils.trace_wrapper import trace_wrapper
 from deal_pilot.utils.get_prompt import get_prompt
 from deal_pilot.agents.main_agent_state import MainAgentState
 from deal_pilot.middlewares.turn_summary import turn_summary
 from deal_pilot.agents.agent_factory import AgentFactory
+from langchain.agents.middleware import AgentMiddleware, AgentState
 
 
 class MainAgentFactory(AgentFactory):
@@ -19,24 +18,11 @@ class MainAgentFactory(AgentFactory):
     def name(self) -> str:
         return "main_agent"
 
-    async def create_agent(
-        self,
-        *,
-        model: Any,
-        system_prompt: str,
-        tools: Sequence[BaseTool],
-        subagents: list[dict],
-    ) -> Runnable:
-        agent = create_deep_agent(
-            model=model,
-            system_prompt=system_prompt,
-            tools=tools,
-            state_schema=MainAgentState,
-            subagents=[CompiledSubAgent(**subagent) for subagent in subagents],
-            middleware=[turn_summary],
-            backend=SandboxBackend(),
-        )
-        return agent
+    def get_state_schema(self) -> type[DeepAgentState] | None:
+        return MainAgentState
+
+    def get_middlewares(self) -> Sequence[AgentMiddleware[AgentState[Any], None, Any]]:
+        return [turn_summary]
 
 
 main_agent_factory = MainAgentFactory()
